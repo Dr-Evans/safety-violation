@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://b52hvqxr7bnae"]
+
+[ext_resource type="Script" uid="uid://c44dvxiysi0xt" path="res://scripts/moving_block.gd" id="1_7ujfe"]
+[ext_resource type="Texture2D" uid="uid://bpi0q26h3kji" path="res://assets/sun.png" id="2_iatrb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0wfyh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sugp2"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" unique_id=852304982]
+script = ExtResource("1_7ujfe")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1348816764]
+texture_filter = 1
+scale = Vector2(10, 10)
+texture = ExtResource("2_iatrb")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=163046551]
+shape = SubResource("RectangleShape2D_0wfyh")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1125500457]
+scale = Vector2(5, 5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=968304603]
+shape = SubResource("RectangleShape2D_sugp2")
+
+[connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event"]
