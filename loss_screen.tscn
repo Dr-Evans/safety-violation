@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://d0ulbxuibtc34"]
 
 [ext_resource type="Script" uid="uid://b1e7me7llqfoe" path="res://loss_screen.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://background.tscn" id="2_background"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_sign"]
 content_margin_left = 28.0
@@ -73,8 +72,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
-
-[node name="Background" parent="." unique_id=1125225428 instance=ExtResource("2_background")]
 
 [node name="Shade" type="ColorRect" parent="." unique_id=1894631542]
 layout_mode = 1

@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
 [ext_resource type="PackedScene" path="res://background.tscn" id="3_background"]
 [ext_resource type="Script" path="res://coaster_track.gd" id="4_track"]
+[ext_resource type="PackedScene" path="res://loss_screen.tscn" id="5_loss"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
 
@@ -44,3 +45,7 @@ limit_right = 3800
 limit_bottom = 540
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1716644902]
+layer = 10
+
+[node name="LossScreen" parent="HUD" instance=ExtResource("5_loss")]
+visible = false

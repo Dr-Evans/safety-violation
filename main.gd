@@ -7,6 +7,7 @@ extends Node2D
 @onready var camera: Camera2D = $Camera
 @onready var track: CoasterTrack = $Track
 @onready var cart: PathFollow2D = $Track/Cart
+@onready var loss_screen: Control = $HUD/LossScreen
 
 const TOTAL_PARTS: int = 2
 # The cart sprite is 52 px wide; leave 4 px extra at its front and rear.
@@ -52,7 +53,11 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# Inspection remains possible before launch and after the result.
+	# Freeze the view behind the loss overlay, including keyboard panning.
+	if crashed:
+		return
+
+	# Inspection remains possible before launch and after reaching the finish.
 	_pan_camera(delta)
 
 	if not running:
@@ -76,7 +81,7 @@ func _physics_process(delta: float) -> void:
 		):
 			crashed = true
 			running = false
-			# Finish this physics update before replacing the gameplay scene.
+			# Finish this physics update before showing the loss overlay.
 			_show_loss_screen.call_deferred()
 			break
 
@@ -88,9 +93,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _show_loss_screen() -> void:
-	var result := get_tree().change_scene_to_file("res://loss_screen.tscn")
-	if result != OK:
-		push_error("Could not open the loss screen: %s" % error_string(result))
+	_dragging_camera = false
+	# Keep Main alive so its track, cart, and background remain visible.
+	loss_screen.show()
 
 
 func _pan_camera(delta: float) -> void:
@@ -109,7 +114,8 @@ func _set_camera_x(value: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_echo():
+	# The overlay handles retry/menu input once the ride has crashed.
+	if event.is_echo() or crashed:
 		return
 
 	if event.is_action_pressed("restart"):

@@ -7,11 +7,20 @@ var changing_scene: bool = false
 
 
 func _ready() -> void:
-	# Enter/Space activate the focused button; arrows and Tab change focus.
-	retry_button.grab_focus()
+	visibility_changed.connect(_on_visibility_changed)
+	_on_visibility_changed()
+
+
+func _on_visibility_changed() -> void:
+	# The overlay starts hidden. Give it keyboard focus only when shown.
+	if is_visible_in_tree():
+		retry_button.grab_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Hidden Controls can still receive keyboard events.
+	if not is_visible_in_tree():
+		return
 	if event.is_action_pressed("restart") and not event.is_echo():
 		# Handle the key before changing scenes, which removes this Control.
 		get_viewport().set_input_as_handled()
