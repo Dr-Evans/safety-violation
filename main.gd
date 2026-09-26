@@ -7,7 +7,6 @@ extends Node2D
 @onready var camera: Camera2D = $Camera
 @onready var track: Path2D = $Track
 @onready var cart: PathFollow2D = $Track/Cart
-@onready var status: Label = $HUD/Status
 
 const TOTAL_PARTS: int = 2
 # The cart sprite is 52 px wide; leave 4 px extra at its front and rear.
@@ -45,10 +44,7 @@ func _ready() -> void:
 	# The Sprite2D under Cart displays the tileset artwork, configured in
 	# main.tscn with its wheel bottoms aligned to the path at local y = 0.
 
-	status.position = Vector2(16, 16)
-	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_set_camera_x(480.0)
-	_update_hud()
 	queue_redraw()
 
 
@@ -204,7 +200,6 @@ func _physics_process(delta: float) -> void:
 		finished = true
 		running = false
 
-	_update_hud()
 	queue_redraw()
 
 
@@ -237,7 +232,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("start") and not crashed and not finished:
 		running = true
-		_update_hud()
 
 	if crashed or finished:
 		return
@@ -269,7 +263,6 @@ func _toggle_piece(index: int) -> void:
 		installed[index] = true
 		available_parts -= 1
 
-	_update_hud()
 	queue_redraw()
 
 
@@ -310,7 +303,7 @@ func _draw() -> void:
 		var gap := _gap_at((offset + next_offset) / 2.0)
 
 		if gap == -1 or installed[gap]:
-			var rail_color := Color("#8d939d")
+			var rail_color := Color("#ff7a36")
 			if gap != -1:
 				rail_color = Color("#f4bf60")
 
@@ -356,23 +349,3 @@ func _draw_conveyor() -> void:
 			3.0
 		)
 		offset += 20.0
-
-
-func _update_hud() -> void:
-	var progress := int(distance / track_length * 100.0)
-	var message := "Click circles to install/reclaim rails."
-
-	if crashed:
-		message = "SAFETY VIOLATION. Press R to restart."
-	elif finished:
-		message = "RIDE COMPLETE. Press R to restart."
-	elif not running:
-		message = "Prepare your repairs, then press Space."
-
-	status.text = (
-		"SAFETY VIOLATION\n"
-		+ "Parts: %d / %d | Progress: %d%%\n"
-		% [available_parts, TOTAL_PARTS, progress]
-		+ "A/D or arrows: pan | F: find cart | R: restart\n"
-		+ message
-	)

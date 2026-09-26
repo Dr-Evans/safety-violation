@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bfrhtkn4ysao5" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
+[ext_resource type="PackedScene" path="res://background.tscn" id="3_background"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
 
@@ -12,6 +13,8 @@ filter_clip = true
 
 [node name="Main" type="Node2D" unique_id=138476622]
 script = ExtResource("1_ig7tw")
+
+[node name="Background" parent="." instance=ExtResource("3_background")]
 
 [node name="Track" type="Path2D" parent="." unique_id=1991736849]
 curve = SubResource("Curve2D_7dm0k")
@@ -36,7 +39,3 @@ limit_right = 3800
 limit_bottom = 540
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1716644902]
-
-[node name="Status" type="Label" parent="HUD" unique_id=2041261557]
-offset_right = 40.0
-offset_bottom = 23.0
