@@ -1,0 +1,229 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://owner_intro.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://background.tscn" id="2_background"]
+[ext_resource type="Texture2D" path="res://assets/owner.png" id="3_owner"]
+[ext_resource type="AudioStream" path="res://sounds/babblingOrsonWick.wav" id="4_voice"]
+
+[sub_resource type="SystemFont" id="Font_heading"]
+font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
+font_weight = 700
+
+[sub_resource type="SystemFont" id="Font_controls"]
+font_names = PackedStringArray("Consolas", "DejaVu Sans Mono")
+
+[sub_resource type="StyleBoxFlat" id="Style_sign"]
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+bg_color = Color(0.98, 0.95, 0.87, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.09, 0.12, 0.14, 1)
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(6, 6)
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(1, 0.48, 0.21, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(1, 0.64, 0.33, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
+bg_color = Color(0.82, 0.35, 0.13, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_button_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.71, 0.32, 0.32, 1)
+
+[sub_resource type="StyleBoxFlat" id="Style_skip"]
+bg_color = Color(1, 0.97, 0.9, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[node name="OwnerIntro" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" parent="." instance=ExtResource("2_background")]
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.04, 0.06, 0.09, 0.55)
+
+[node name="OwnerVoice" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_voice")
+volume_db = -8.0
+
+[node name="Layout" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="Columns" type="HBoxContainer" parent="Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+
+[node name="Portrait" type="TextureRect" parent="Layout/Columns"]
+custom_minimum_size = Vector2(290, 400)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+texture = ExtResource("3_owner")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Sign" type="PanelContainer" parent="Layout/Columns"]
+custom_minimum_size = Vector2(530, 370)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_sign")
+
+[node name="Content" type="VBoxContainer" parent="Layout/Columns/Sign"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Notice" type="Label" parent="Layout/Columns/Sign/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.35, 0.38, 0.38, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 14
+text = "BEFORE YOU CLOCK IN"
+
+[node name="Header" type="HBoxContainer" parent="Layout/Columns/Sign/Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Speaker" type="Label" parent="Layout/Columns/Sign/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_heading")
+theme_override_font_sizes/font_size = 28
+text = "PARK OWNER"
+
+[node name="LineCount" type="Label" parent="Layout/Columns/Sign/Content/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.35, 0.38, 0.38, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 14
+text = "1 / 4"
+vertical_alignment = 1
+
+[node name="Stripe" type="ColorRect" parent="Layout/Columns/Sign/Content"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+mouse_filter = 2
+color = Color(1, 0.48, 0.21, 1)
+
+[node name="Dialogue" type="RichTextLabel" parent="Layout/Columns/Sign/Content"]
+custom_minimum_size = Vector2(0, 144)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/normal_font = SubResource("Font_controls")
+theme_override_font_sizes/normal_font_size = 20
+text = "You're the new operator? Good. The coaster is open, and the repair budget is already gone."
+scroll_active = false
+visible_characters_behavior = 1
+
+[node name="Hint" type="Label" parent="Layout/Columns/Sign/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.35, 0.38, 0.38, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "Click or press Space / Enter to reveal the line."
+
+[node name="Actions" type="HBoxContainer" parent="Layout/Columns/Sign/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="ContinueButton" type="Button" parent="Layout/Columns/Sign/Content/Actions"]
+custom_minimum_size = Vector2(210, 46)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.95, 0.87, 1)
+theme_override_colors/font_hover_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_heading")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "Reveal line"
+
+[node name="SkipButton" type="Button" parent="Layout/Columns/Sign/Content/Actions"]
+custom_minimum_size = Vector2(150, 46)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.95, 0.87, 1)
+theme_override_colors/font_hover_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_heading")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_skip")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/pressed = SubResource("Style_button_pressed")
+theme_override_styles/focus = SubResource("Style_button_focus")
+text = "Skip briefing"
+
+[connection signal="pressed" from="Layout/Columns/Sign/Content/Actions/ContinueButton" to="." method="_advance_dialogue"]
+[connection signal="pressed" from="Layout/Columns/Sign/Content/Actions/SkipButton" to="." method="_start_ride"]
