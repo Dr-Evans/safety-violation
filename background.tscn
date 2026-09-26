@@ -1,10 +1,13 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://assets/background/sky.png" id="1_sky"]
-[ext_resource type="Texture2D" path="res://assets/background/clouds.png" id="2_clouds"]
-[ext_resource type="Texture2D" path="res://assets/background/mountains_back.png" id="3_mountains_back"]
-[ext_resource type="Texture2D" path="res://assets/background/mountains.png" id="4_mountains"]
-[ext_resource type="Texture2D" path="res://assets/background/ground.png" id="5_ground"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/sky.png" id="1_sky"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/cloud1.png" id="2_clouds"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/mounitns_back.png" id="3_mountains_back"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/mounitns_top.png" id="4_mountains"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/ground.png" id="5_ground"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/cloud2.png" id="6_cloud2"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/cloud3.png" id="7_cloud3"]
+[ext_resource type="Texture2D" path="res://assets/background 2.0/clou_back.png" id="8_cloud_back"]
 
 [node name="Background" type="CanvasLayer"]
 layer = -1
@@ -26,18 +29,39 @@ scroll_offset = Vector2(0, 18)
 repeat_size = Vector2(1308, 0)
 follow_viewport = false
 
+[node name="BackCloud" type="Sprite2D" parent="Artwork/Clouds"]
+position = Vector2(300, 90)
+scale = Vector2(3, 3)
+texture = ExtResource("8_cloud_back")
+centered = false
+
+[node name="BackCloud2" type="Sprite2D" parent="Artwork/Clouds"]
+position = Vector2(810, 72)
+scale = Vector2(3, 3)
+texture = ExtResource("8_cloud_back")
+centered = false
+
 [node name="Image" type="Sprite2D" parent="Artwork/Clouds"]
-texture_repeat = 2
 scale = Vector2(3, 3)
 texture = ExtResource("2_clouds")
 centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 436, 25)
+
+[node name="Cloud2" type="Sprite2D" parent="Artwork/Clouds"]
+position = Vector2(480, 24)
+scale = Vector2(3, 3)
+texture = ExtResource("6_cloud2")
+centered = false
+
+[node name="Cloud3" type="Sprite2D" parent="Artwork/Clouds"]
+position = Vector2(990, 54)
+scale = Vector2(3, 3)
+texture = ExtResource("7_cloud3")
+centered = false
 
 [node name="FarMountains" type="Parallax2D" parent="Artwork"]
 scroll_scale = Vector2(0.15, 0)
 scroll_offset = Vector2(0, 246)
-repeat_size = Vector2(1116, 0)
+repeat_size = Vector2(1128, 0)
 follow_viewport = false
 
 [node name="Image" type="Sprite2D" parent="Artwork/FarMountains"]
@@ -46,12 +70,12 @@ scale = Vector2(3, 3)
 texture = ExtResource("3_mountains_back")
 centered = false
 region_enabled = true
-region_rect = Rect2(0, 0, 372, 82)
+region_rect = Rect2(0, 0, 376, 68)
 
 [node name="NearMountains" type="Parallax2D" parent="Artwork"]
 scroll_scale = Vector2(0.3, 0)
 scroll_offset = Vector2(0, 279)
-repeat_size = Vector2(1584, 0)
+repeat_size = Vector2(1608, 0)
 follow_viewport = false
 
 [node name="Image" type="Sprite2D" parent="Artwork/NearMountains"]
@@ -60,7 +84,7 @@ scale = Vector2(3, 3)
 texture = ExtResource("4_mountains")
 centered = false
 region_enabled = true
-region_rect = Rect2(0, 0, 528, 71)
+region_rect = Rect2(0, 0, 536, 76)
 
 [node name="Ground" type="Parallax2D" parent="Artwork"]
 scroll_scale = Vector2(1, 0)

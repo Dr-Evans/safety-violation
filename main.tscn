@@ -9,12 +9,8 @@
 [ext_resource type="AudioStream" path="res://sounds/trainClack.wav" id="7_train_clack"]
 [ext_resource type="AudioStream" path="res://sounds/pop.wav" id="8_repair"]
 [ext_resource type="AudioStream" path="res://sounds/crash.wav" id="9_crash"]
-[ext_resource type="Script" path="res://cart_visual.gd" id="10_cart_visual"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_cart"]
-atlas = ExtResource("2_tileset")
-region = Rect2(31, 1271, 403, 217)
-filter_clip = true
+[ext_resource type="PackedScene" path="res://cart.tscn" id="10_cart"]
+[ext_resource type="AudioStream" path="res://sounds/soundTrack.wav" id="11_soundtrack"]
 
 [sub_resource type="SystemFont" id="Font_score"]
 font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
@@ -46,6 +42,9 @@ script = ExtResource("1_ig7tw")
 [node name="TrainClack" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("7_train_clack")
 
+[node name="Soundtrack" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("11_soundtrack")
+
 [node name="RepairSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("8_repair")
 volume_db = -10.0
@@ -59,30 +58,21 @@ texture_filter = 1
 script = ExtResource("4_track")
 tileset = ExtResource("2_tileset")
 
-[node name="Cart" type="Node2D" parent="." unique_id=277138850]
-z_index = 2
+[node name="FrontCoupler" type="Line2D" parent="."]
+z_index = 1
+width = 3.0
+default_color = Color(0.34, 0.32, 0.31, 1)
 
-[node name="Visual" type="Node2D" parent="Cart"]
-script = ExtResource("10_cart_visual")
+[node name="RearCoupler" type="Line2D" parent="."]
+z_index = 1
+width = 3.0
+default_color = Color(0.34, 0.32, 0.31, 1)
 
-[node name="Body" type="Sprite2D" parent="Cart/Visual" unique_id=2017269555]
-texture_filter = 1
-position = Vector2(-26, -28)
-scale = Vector2(0.12903226, 0.12903226)
-texture = SubResource("AtlasTexture_cart")
-centered = false
+[node name="RearWagon" parent="." instance=ExtResource("10_cart")]
 
-[node name="RearSpoke" type="Polygon2D" parent="Cart/Visual"]
-position = Vector2(-14, -4)
-color = Color(0.34, 0.32, 0.31, 1)
-polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
-antialiased = false
+[node name="MiddleWagon" parent="." instance=ExtResource("10_cart")]
 
-[node name="FrontSpoke" type="Polygon2D" parent="Cart/Visual"]
-position = Vector2(18, -4)
-color = Color(0.34, 0.32, 0.31, 1)
-polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
-antialiased = false
+[node name="Cart" parent="." instance=ExtResource("10_cart")]
 
 [node name="Camera" type="Camera2D" parent="." unique_id=912009987]
 position = Vector2(480, 270)

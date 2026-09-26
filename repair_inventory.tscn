@@ -90,7 +90,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("Font_controls")
 theme_override_font_sizes/font_size = 12
-text = "Drag or press A / S / D / F."
+text = "Click or press A / S / D / F."
 
 [node name="Rising" type="PanelContainer" parent="Tray/Content"]
 custom_minimum_size = Vector2(126, 56)
@@ -211,34 +211,3 @@ mouse_filter = 2
 script = ExtResource("3_icon")
 kind = 3
 tileset = ExtResource("2_tileset")
-
-[node name="Preview" type="PanelContainer" parent="."]
-visible = false
-custom_minimum_size = Vector2(140, 48)
-layout_mode = 0
-z_index = 1
-mouse_filter = 2
-theme_override_styles/panel = SubResource("Style_sign")
-
-[node name="Contents" type="VBoxContainer" parent="Preview"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 4
-
-[node name="Rail" type="Control" parent="Preview/Contents"]
-custom_minimum_size = Vector2(100, 30)
-layout_mode = 2
-texture_filter = 1
-mouse_filter = 2
-script = ExtResource("3_icon")
-kind = 1
-tileset = ExtResource("2_tileset")
-
-[node name="Hint" type="Label" parent="Preview/Contents"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
-theme_override_fonts/font = SubResource("Font_controls")
-theme_override_font_sizes/font_size = 12
-text = "Place rail"
-horizontal_alignment = 1

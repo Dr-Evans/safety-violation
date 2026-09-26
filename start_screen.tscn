@@ -147,7 +147,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("SystemFont_controls")
 theme_override_font_sizes/font_size = 15
-text = "Drag the matching rail onto red gaps.
+text = "Click the matching part to repair the next red gap.
 A: rising | S: flat | D: falling | F: loop | R: restart
 Survive longer. Correct repairs earn bonus points."
 horizontal_alignment = 1

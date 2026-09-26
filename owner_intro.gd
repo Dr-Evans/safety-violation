@@ -3,8 +3,9 @@ extends Control
 @export_range(1.0, 120.0, 1.0) var characters_per_second: float = 35.0
 @export var dialogue_lines: Array[String] = [
 	"You're the new operator? Good. The coaster is open, and the repair budget is already gone.",
-	"The track keeps coming. When a red gap appears, give it the right rail: rising, flat, falling, or a loop. Drag one from the supply tray.",
+	"The track keeps coming. When a red gap appears, give it the right rail: rising, flat, falling, or a loop. Click the matching part in the supply tray to fix the next gap.",
 	"Or use the keys: A for rising, S for flat, D for falling, F for loops. Fix gaps before the cart reaches them. The ride gets faster, and repairs earn bonus points.",
+	"Birds sometimes fly down onto the rails. Click them to shoo them away before the train gets there. You can click them while they're still flying, too.",
 	"Keep the passengers alive. And if anyone asks about the missing track... it's a budget cut. Now, get to work."
 ]
 
@@ -45,7 +46,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		advance = advance or (event.button_index == MOUSE_BUTTON_LEFT and event.pressed)
 	if advance:
-		# Consume this click before loading Main so it cannot pick up a rail.
+		# Consume this click before loading Main so it cannot trigger a repair.
 		get_viewport().set_input_as_handled()
 		_advance_dialogue()
 

@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/tileset.png" id="1_tileset"]
+[ext_resource type="Script" path="res://cart_visual.gd" id="2_visual"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cart"]
+atlas = ExtResource("1_tileset")
+region = Rect2(31, 1271, 403, 217)
+filter_clip = true
+
+[node name="Cart" type="Node2D"]
+z_index = 2
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("2_visual")
+
+[node name="Body" type="Sprite2D" parent="Visual"]
+texture_filter = 1
+position = Vector2(-26, -28)
+scale = Vector2(0.12903226, 0.12903226)
+texture = SubResource("AtlasTexture_cart")
+centered = false
+
+[node name="RearSpoke" type="Polygon2D" parent="Visual"]
+position = Vector2(-14, -4)
+color = Color(0.34, 0.32, 0.31, 1)
+polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
+antialiased = false
+
+[node name="FrontSpoke" type="Polygon2D" parent="Visual"]
+position = Vector2(18, -4)
+color = Color(0.34, 0.32, 0.31, 1)
+polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
+antialiased = false
