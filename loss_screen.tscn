@@ -129,6 +129,14 @@ theme_override_font_sizes/font_size = 18
 text = "You didn't repair the track in time."
 horizontal_alignment = 1
 
+[node name="Results" type="Label" parent="Center/Sign/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_fonts/font = SubResource("SystemFont_controls")
+theme_override_font_sizes/font_size = 18
+text = "SCORE 0  |  0m  |  0 REPAIRS"
+horizontal_alignment = 1
+
 [node name="Actions" type="HBoxContainer" parent="Center/Sign/Content" unique_id=1570318230]
 layout_mode = 2
 theme_override_constants/separation = 16

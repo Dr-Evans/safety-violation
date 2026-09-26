@@ -1,402 +1,288 @@
 extends Node2D
 
-@export var conveyor_speed: float = 70.0
-@export var ride_speed: float = 220.0
-@export var camera_pan_speed: float = 900.0
-@export var repair_gap_length: float = 96.0
+@export var conveyor_speed: float = 80.0
+@export var initial_speed: float = 160.0
+@export var speed_increase_per_second: float = 6.0
+@export var maximum_speed: float = 440.0
+@export var repair_bonus: int = 100
 
-@onready var camera: Camera2D = $Camera
 @onready var track: CoasterTrack = $Track
-@onready var cart: PathFollow2D = $Track/Cart
-@onready var cart_visual: CartVisual = $Track/Cart/Visual
-@onready var loss_screen: Control = $HUD/LossScreen
+@onready var cart: Node2D = $Cart
+@onready var cart_visual: CartVisual = $Cart/Visual
 @onready var inventory: RepairInventory = $HUD/Inventory
+@onready var loss_screen: Control = $HUD/LossScreen
 @onready var train_audio: AudioStreamPlayer = $TrainClack
+@onready var repair_audio: AudioStreamPlayer = $RepairSound
+@onready var crash_audio: AudioStreamPlayer = $CrashSound
+@onready var score_label: Label = $HUD/Score/Content/Score
+@onready var distance_label: Label = $HUD/Score/Content/Details
+@onready var background_layers: Array[Parallax2D] = [
+	$Background/Artwork/Clouds, $Background/Artwork/FarMountains,
+	$Background/Artwork/NearMountains, $Background/Artwork/Ground
+]
 
-const TOTAL_PARTS: int = 2
-const INVENTORY_CAPACITY: int = 1
-# The cart sprite is 52 px wide; leave 4 px extra at its front and rear.
+const CART_X: float = 260.0
 const CART_CLEARANCE: float = 30.0
-const CLICK_RADIUS: float = 24.0
-const WORLD_WIDTH: float = 11000.0
-const IN_INVENTORY: int = -1
+const DROP_RADIUS: float = 28.0
+const REPAIR_ACTIONS = ["repair_rising", "repair_flat", "repair_falling", "repair_loop"]
 
-# Each value is a fraction of the distance from boarding to the finish.
-var gap_starts: Array[float] = [0.06, 0.16, 0.27, 0.38, 0.49, 0.60, 0.71, 0.82, 0.93]
-var installed: Array[bool] = []
-
-var available_parts: int = 0
-var track_length: float = 0.0
-
-# Distance along the open route; it stops at track_length.
 var distance: float = 0.0
-
-var running: bool = false
+var score: int = 0
+var repairs: int = 0
 var crashed: bool = false
-var conveyor_start: float = 0.0
-var conveyor_end: float = 0.0
-var finished: bool = false
-var _dragging_camera: bool = false
-
-# Each of our TWO physical parts is either in inventory (-1) or at a gap index.
-# A drag previews a move; the real rail stays put until a valid drop succeeds.
-# Both rails start installed in the first two repair sections.
-var _piece_gaps: Array[int] = [0, 1]
-var _dragged_part: int = -1
-var _hover_gap: int = -1
-var _gap_points: Array[PackedVector2Array] = []
+var _bonus_points: int = 0
+var _ride_elapsed: float = 0.0
+var _current_speed: float = 160.0
+var _scroll_x: float = 0.0
+var _dragged_kind: int = -1
+var _hover_id: int = -1
+var _feedback: String = ""
+var _feedback_remaining: float = 0.0
 
 
 func _ready() -> void:
-	installed.resize(gap_starts.size())
-	installed.fill(false)
-	track.build(gap_starts, repair_gap_length, installed)
-	track_length = track.length
-	conveyor_start = track.conveyor_start
-	conveyor_end = track.conveyor_end
-	_cache_gap_targets()
-	inventory.configure(track.tileset, track.rail_region)
-	inventory.drag_requested.connect(_begin_part_drag)
-	_sync_parts()
-
-	cart.loop = false
-	cart.rotates = true
-	cart.cubic_interp = false
-	cart.progress = 0.0
-
-	# The Sprite2D under Cart/Visual displays the tileset artwork, configured in
-	# main.tscn with its wheel bottoms aligned to the path at local y = 0.
-
-	_set_camera_x(480.0)
-	# The title screen's Start game button begins the ride on scene load.
-	running = true
-	_update_train_audio()
-	queue_redraw()
+	_current_speed = maxf(initial_speed, 1.0)
+	track.begin_run()
+	inventory.configure(track.tileset)
+	inventory.drag_requested.connect(_begin_drag)
+	for layer in background_layers:
+		layer.ignore_camera_scroll = true
+	_update_world()
+	_update_hud()
+	_update_targets()
 
 
 func _physics_process(delta: float) -> void:
-	_update_train_audio()
-	# Freeze the view behind the loss overlay, including keyboard panning.
 	if crashed:
 		return
-
-	# Inspection remains possible before launch and after reaching the finish.
-	_pan_camera(delta)
-
-	if not running:
+	var segment := track.segment_at(distance)
+	if segment == null:
+		return
+	if not segment.conveyor:
+		_ride_elapsed += delta
+	_current_speed = maxf(0.0, conveyor_speed) if segment.conveyor else minf(
+		maxf(initial_speed, 1.0) + maxf(speed_increase_per_second, 0.0) * _ride_elapsed,
+		maxf(maximum_speed, initial_speed)
+	)
+	if segment.conveyor:
+		segment.advance_chain(_current_speed * delta)
+	track.ensure_ahead(distance + _current_speed * delta, _scroll_x)
+	var previous_distance := distance
+	_advance(_current_speed * delta)
+	# Keep visual motion tied to the actual distance travelled.
+	cart_visual.advance(distance - previous_distance, delta)
+	if crashed:
 		cart_visual.reset_suspension()
 		return
-
-	var speed := ride_speed
-	if distance < conveyor_end:
-		speed = conveyor_speed
-
-	track.advance_conveyor(conveyor_speed * delta)
-	var previous_distance := distance
-	distance = minf(distance + speed * delta, track_length)
-	cart.progress = distance
-	# Animate only the artwork; path progress and repair clearance stay exact.
-	cart_visual.advance(distance - previous_distance, delta)
-
-	# Sweep the whole movement, including the cart's front and rear.
-	for i in range(gap_starts.size()):
-		if not installed[i] and _overlaps_gap(
-			previous_distance - CART_CLEARANCE,
-			distance + CART_CLEARANCE,
-			i
-		):
-			crashed = true
-			running = false
-			# Finish this physics update before showing the loss overlay.
-			_show_loss_screen.call_deferred()
-			break
-
-	if not crashed and distance >= track_length:
-		finished = true
-		running = false
-		cart_visual.reset_suspension()
-
-	if crashed or finished:
-		_cancel_part_drag()
-	elif _dragged_part >= 0:
-		_update_drag_preview()
+	track.prune(distance)
+	_update_world()
+	_feedback_remaining = maxf(0.0, _feedback_remaining - delta)
+	_update_hud()
+	_update_targets()
 	_update_train_audio()
-	queue_redraw()
+	if _dragged_kind >= 0:
+		_update_drag_preview()
 
 
-func _update_train_audio() -> void:
-	# Start once and let the sound loop; calling play every frame restarts it.
-	var climbing := running and not crashed and not finished and conveyor_speed > 0.0
-	climbing = climbing and distance >= conveyor_start and distance < conveyor_end
-	if climbing:
-		train_audio.pitch_scale = 1.0
-		if not train_audio.playing:
-			train_audio.play()
-	elif train_audio.playing:
-		train_audio.stop()
+func _advance(amount: float) -> void:
+	var next_distance := distance + amount
+	# Sweep the whole step, including the nose of the cart, even at high speed.
+	for segment in track.segments:
+		if not segment.broken:
+			continue
+		var gap_start := segment.start_distance + segment.gap_start
+		var gap_end := segment.start_distance + segment.gap_end
+		if next_distance + CART_CLEARANCE >= gap_start and distance - CART_CLEARANCE <= gap_end:
+			distance = maxf(distance, gap_start - CART_CLEARANCE)
+			_crash()
+			return
+	distance = next_distance
 
 
-func _show_loss_screen() -> void:
-	_dragging_camera = false
-	_cancel_part_drag()
-	# Keep Main alive so its track, cart, and background remain visible.
-	loss_screen.show()
+func _update_world() -> void:
+	var segment := track.segment_at(distance)
+	if segment == null:
+		return
+	var local_distance := clampf(distance - segment.start_distance, 0.0, segment.length)
+	var pose := segment.curve.sample_baked_with_rotation(local_distance)
+	# Scroll steadily forward through a loop, letting the cart travel around it.
+	_scroll_x = segment.position.x + segment.width * local_distance / segment.length
+	track.position.x = CART_X - _scroll_x
+	cart.position = track.position + segment.position + pose.origin
+	cart.rotation = pose.get_rotation()
+	for layer in background_layers:
+		layer.scroll_offset.x = -fposmod(distance * layer.scroll_scale.x, layer.repeat_size.x)
 
 
-func _pan_camera(delta: float) -> void:
-	var direction := Input.get_axis("pan_left", "pan_right")
-	_set_camera_x(camera.position.x + direction * camera_pan_speed * delta)
+func _update_hud() -> void:
+	score = int(distance / 10.0) + _bonus_points
+	score_label.text = "SCORE  %d" % score
+	distance_label.text = "%dm  |  SPEED %.2fx  |  %d REPAIRS" % [
+		int(distance / 10.0), _current_speed / maxf(initial_speed, 1.0), repairs
+	]
+	var next := _next_gap()
+	var instruction := "NO GAP AHEAD"
+	if next != null:
+		instruction = "NEXT: %s [%s]" % [RailSegment.TYPE_NAMES[next.kind], RailSegment.TYPE_KEYS[next.kind]]
+	inventory.set_instruction(instruction, _feedback if _feedback_remaining > 0.0 else "Drag or press A / S / D / F.")
 
 
-func _set_camera_x(value: float) -> void:
-	var half_width := get_viewport_rect().size.x * 0.5 / camera.zoom.x
-	camera.position = Vector2(
-		clampf(value, half_width, WORLD_WIDTH - half_width),
-		270.0
+func _can_repair(segment: RailSegment) -> bool:
+	return not crashed and segment != null and segment.broken and (
+		distance + CART_CLEARANCE < segment.start_distance + segment.gap_start
 	)
-	# Keep repair hit detection current after keyboard or mouse panning.
-	camera.force_update_scroll()
+
+
+func _visible_gap(segment: RailSegment) -> bool:
+	var screen := segment.get_global_transform_with_canvas() * segment.marker_position()
+	var view := get_viewport_rect().size
+	return screen.x >= 30.0 and screen.x <= view.x - 30.0 and screen.y >= 90.0 and screen.y <= view.y - 100.0
+
+
+func _next_gap() -> RailSegment:
+	# Keyboard repairs the nearest gap along the route, never an offscreen gap.
+	for segment in track.segments:
+		if _can_repair(segment) and _visible_gap(segment):
+			return segment
+	return null
+
+
+func _gap_under_mouse() -> RailSegment:
+	var closest: RailSegment = null
+	var radius := DROP_RADIUS
+	var mouse := get_global_mouse_position()
+	for segment in track.segments:
+		if not _can_repair(segment) or not _visible_gap(segment):
+			continue
+		var separation := segment.distance_to_gap(segment.to_local(mouse))
+		if separation <= radius:
+			radius = separation
+			closest = segment
+	return closest
+
+
+func _try_repair(segment: RailSegment, kind: int) -> bool:
+	if not _can_repair(segment):
+		return false
+	if segment.kind != kind:
+		_set_feedback("Wrong rail! Use %s [%s]." % [
+			RailSegment.TYPE_NAMES[segment.kind], RailSegment.TYPE_KEYS[segment.kind]
+		])
+		return false
+	if not segment.install():
+		return false
+	_bonus_points += maxi(repair_bonus, 0)
+	repairs += 1
+	repair_audio.play()
+	_set_feedback("+%d  Correct rail!" % maxi(repair_bonus, 0))
+	_update_hud()
+	_update_targets()
+	return true
+
+
+func _set_feedback(message: String) -> void:
+	_feedback = message
+	_feedback_remaining = 1.5
+	_update_hud()
+
+
+func _update_targets() -> void:
+	var next := _next_gap()
+	for segment in track.segments:
+		var hover_state := 0
+		if segment.segment_id == _hover_id and _dragged_kind >= 0:
+			hover_state = 1 if segment.kind == _dragged_kind else -1
+		segment.set_target(segment == next, hover_state)
 
 
 func _input(event: InputEvent) -> void:
-	# _input runs before GUI controls, so releases work over both track and tray.
-	if _dragged_part < 0:
+	if crashed or event.is_echo():
 		return
-	if crashed or finished:
-		_cancel_part_drag()
+	if event.is_action_pressed("restart"):
+		get_viewport().set_input_as_handled()
+		get_tree().reload_current_scene()
+		return
+	for kind in range(REPAIR_ACTIONS.size()):
+		if event.is_action_pressed(REPAIR_ACTIONS[kind]):
+			get_viewport().set_input_as_handled()
+			_cancel_drag()
+			var next := _next_gap()
+			if next != null:
+				_try_repair(next, kind)
+			return
+	if _dragged_kind < 0:
 		return
 	if event is InputEventMouseMotion:
 		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-			_cancel_part_drag()
+			_cancel_drag()
 		else:
 			_update_drag_preview()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-			_finish_part_drag()
-			get_viewport().set_input_as_handled()
+			_finish_drag()
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			_cancel_part_drag()
-			get_viewport().set_input_as_handled()
-		elif event.pressed:
-			# Additional presses cannot pick up another rail while dragging.
-			get_viewport().set_input_as_handled()
+			_cancel_drag()
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel"):
-		_cancel_part_drag()
+		_cancel_drag()
 		get_viewport().set_input_as_handled()
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
-		_dragging_camera = false
-		if is_node_ready() and _dragged_part >= 0:
-			_cancel_part_drag()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	# The overlay handles retry/menu input once the ride has crashed.
-	if event.is_echo() or crashed:
+func _begin_drag(kind: int) -> void:
+	if crashed or _dragged_kind >= 0 or kind < 0 or kind > RailSegment.LOOP:
 		return
-
-	if event.is_action_pressed("restart"):
-		get_tree().reload_current_scene()
-		return
-
-	if event.is_action_pressed("focus_cart"):
-		_set_camera_x(cart.position.x)
-		return
-
-	if event.is_action_pressed("start") and not crashed and not finished:
-		running = true
-
-	if _dragged_part >= 0:
-		return
-
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			_dragging_camera = false
-			if event.pressed:
-				# Drag an installed rail. Empty targets never repair on a click.
-				if not finished:
-					var gap := _find_gap(get_local_mouse_position())
-					if gap >= 0:
-						var part := _piece_gaps.find(gap)
-						if part >= 0:
-							_begin_part_drag(part)
-						get_viewport().set_input_as_handled()
-						return
-				_dragging_camera = true
-			get_viewport().set_input_as_handled()
-			return
-
-	if event is InputEventMouseMotion and _dragging_camera:
-		# Also stop if the mouse was released outside the game window.
-		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-			_dragging_camera = false
-			return
-		# Move the world with the pointer. Relative movement already accounts
-		# for window stretching; dividing by zoom converts it to world units.
-		_set_camera_x(camera.position.x - event.relative.x / camera.zoom.x)
-		get_viewport().set_input_as_handled()
-
-
-func _begin_part_drag(part_index: int) -> void:
-	if crashed or finished or _dragged_part >= 0:
-		return
-	if part_index < 0 or part_index >= TOTAL_PARTS or _piece_is_locked(part_index):
-		return
-	if _piece_gaps[part_index] != IN_INVENTORY and available_parts >= INVENTORY_CAPACITY:
-		return
-	_dragging_camera = false
-	_dragged_part = part_index
-	inventory.update_parts(_piece_gaps, _dragged_part, true)
+	_dragged_kind = kind
+	inventory.set_controls_enabled(true, _dragged_kind)
 	_update_drag_preview()
 
 
-func _finish_part_drag() -> void:
-	var target := IN_INVENTORY
-	if not inventory.is_over_inventory(get_viewport().get_mouse_position()):
-		target = _find_gap(get_local_mouse_position())
-		if target < 0:
-			_cancel_part_drag()
-			return
-	_commit_part_drop(_dragged_part, target)
-	_cancel_part_drag()
+func _finish_drag() -> void:
+	var target := _gap_under_mouse()
+	if target != null:
+		_try_repair(target, _dragged_kind)
+	_cancel_drag()
 
 
-func _can_drop_part(part_index: int, target: int) -> bool:
-	if crashed or finished or part_index < 0 or part_index >= TOTAL_PARTS:
-		return false
-	if target < IN_INVENTORY or target >= gap_starts.size():
-		return false
-	if _piece_is_locked(part_index) or _piece_gaps[part_index] == target:
-		return false
-	if target == IN_INVENTORY:
-		return available_parts < INVENTORY_CAPACITY
-	return not installed[target]
-
-
-func _commit_part_drop(part_index: int, target: int) -> bool:
-	# Recheck on RELEASE: the cart may have reached the source during the drag.
-	if not _can_drop_part(part_index, target):
-		return false
-	_piece_gaps[part_index] = target
-	_sync_parts()
-	return true
-
-
-func _piece_is_locked(part_index: int) -> bool:
-	var source := _piece_gaps[part_index]
-	return source >= 0 and _overlaps_gap(
-		distance - CART_CLEARANCE, distance + CART_CLEARANCE, source
-	)
-
-
-func _sync_parts() -> void:
-	# Derive rail coverage and the count from the two part locations.
-	# This prevents losing or duplicating parts when a drop is cancelled.
-	installed.fill(false)
-	for gap in _piece_gaps:
-		if gap >= 0:
-			installed[gap] = true
-	available_parts = _piece_gaps.count(IN_INVENTORY)
-	for i in range(installed.size()):
-		track.set_piece_installed(i, installed[i])
-	inventory.update_parts(_piece_gaps, _dragged_part, not crashed and not finished)
-	queue_redraw()
-
-
-func _cancel_part_drag() -> void:
-	_dragged_part = -1
-	_hover_gap = -1
+func _cancel_drag() -> void:
+	_dragged_kind = -1
+	_hover_id = -1
 	inventory.hide_preview()
-	inventory.update_parts(_piece_gaps, -1, not crashed and not finished)
-	queue_redraw()
+	inventory.set_controls_enabled(not crashed)
+	_update_targets()
 
 
 func _update_drag_preview() -> void:
-	var mouse := get_viewport().get_mouse_position()
-	var valid := false
-	var hint := "Drop on red gap"
-	_hover_gap = -1
-	if _piece_is_locked(_dragged_part):
-		hint = "Rail in use"
-	elif inventory.is_over_inventory(mouse):
-		valid = _can_drop_part(_dragged_part, IN_INVENTORY)
-		hint = "Return to tray" if valid else "Drop on red gap"
-	else:
-		_hover_gap = _find_gap(get_local_mouse_position())
-		if _hover_gap >= 0:
-			valid = _can_drop_part(_dragged_part, _hover_gap)
-			hint = "Place rail" if valid else "Gap is filled"
-	inventory.show_preview(mouse, valid, hint)
-	queue_redraw()
+	var target := _gap_under_mouse()
+	_hover_id = target.segment_id if target != null else -1
+	var valid := target != null and target.kind == _dragged_kind
+	var message := "Drop on a red gap"
+	if target != null:
+		message = "Place rail" if valid else "Needs %s" % RailSegment.TYPE_NAMES[target.kind]
+	inventory.show_preview(get_viewport().get_mouse_position(), _dragged_kind, valid, message)
+	_update_targets()
 
 
-func _cache_gap_targets() -> void:
-	_gap_points.clear()
-	for start in gap_starts:
-		var offset := start * track_length
-		var end := offset + repair_gap_length
-		var points := PackedVector2Array([track.curve.sample_baked(offset)])
-		while offset < end:
-			offset = minf(offset + 8.0, end)
-			points.append(track.curve.sample_baked(offset))
-		_gap_points.append(points)
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and is_node_ready():
+		_cancel_drag()
 
 
-func _find_gap(world_point: Vector2) -> int:
-	# Accept drops on either the marker or the actual curved missing rail.
-	var closest_gap := -1
-	var closest_distance := CLICK_RADIUS
-	for i in range(_gap_points.size()):
-		var gap_distance := world_point.distance_to(_marker_position(i))
-		var points := _gap_points[i]
-		for j in range(points.size() - 1):
-			var nearest := Geometry2D.get_closest_point_to_segment(world_point, points[j], points[j + 1])
-			gap_distance = minf(gap_distance, world_point.distance_to(nearest))
-		if gap_distance <= closest_distance:
-			closest_distance = gap_distance
-			closest_gap = i
-	return closest_gap
+func _update_train_audio() -> void:
+	var segment := track.segment_at(distance)
+	var climbing := not crashed and segment != null and segment.conveyor and _current_speed > 0.0
+	if climbing and not train_audio.playing:
+		train_audio.play()
+	elif not climbing and train_audio.playing:
+		train_audio.stop()
 
 
-func _overlaps_gap(
-	from_distance: float,
-	to_distance: float,
-	index: int
-) -> bool:
-	var gap_start := gap_starts[index] * track_length
-	var gap_end := gap_start + repair_gap_length
-	return to_distance >= gap_start and from_distance <= gap_end
-
-
-func _marker_position(index: int) -> Vector2:
-	var middle := gap_starts[index] * track_length + repair_gap_length / 2.0
-	return track.curve.sample_baked(middle) + Vector2(0, -32)
-
-
-func _draw() -> void:
-	if track_length <= 0.0:
-		return
-
-	# Drop targets: red = empty, amber = installed, green = valid drop.
-	# A white center means the cart is occupying the piece.
-	for i in range(gap_starts.size()):
-		var marker := _marker_position(i)
-		var marker_color := Color("#c75252")
-
-		if installed[i]:
-			marker_color = Color("#f4bf60")
-
-		if i == _hover_gap and _dragged_part >= 0 and _can_drop_part(_dragged_part, i):
-			marker_color = Color("#75b06f")
-			draw_arc(marker, 22.0, 0.0, TAU, 24, marker_color, 2.0)
-		draw_circle(marker, 16.0, marker_color)
-
-		if installed[i] and _overlaps_gap(
-			distance - CART_CLEARANCE,
-			distance + CART_CLEARANCE,
-			i
-		):
-			draw_circle(marker, 5.0, Color.WHITE)
+func _crash() -> void:
+	crashed = true
+	_cancel_drag()
+	_update_world()
+	_update_hud()
+	train_audio.stop()
+	crash_audio.play()
+	# Freeze the generated track behind the existing loss overlay.
+	loss_screen.call_deferred("show_results", score, distance / 10.0, repairs)

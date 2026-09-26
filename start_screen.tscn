@@ -117,7 +117,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_font_sizes/font_size = 18
-text = "Repair the roller coaster while its running!"
+text = "Keep the coaster on track as the ride gets faster!"
 horizontal_alignment = 1
 
 [node name="SafetyStripe" type="ColorRect" parent="Center/Sign/Content" unique_id=1779350081]
@@ -147,9 +147,9 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("SystemFont_controls")
 theme_override_font_sizes/font_size = 15
-text = "Drag used rails to the tray, then onto red gaps. Carry one rail.
-Drag empty space or use A/D / arrows to pan.
-F: find cart   |   R: restart"
+text = "Drag the matching rail onto red gaps.
+A: rising | S: flat | D: falling | F: loop | R: restart
+Survive longer. Correct repairs earn bonus points."
 horizontal_alignment = 1
 
 [connection signal="pressed" from="Center/Sign/Content/StartButton" to="." method="_on_start_button_pressed"]

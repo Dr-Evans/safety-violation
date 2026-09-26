@@ -1,324 +1,111 @@
 class_name CoasterTrack
-extends Path2D
+extends Node2D
 
-# These regions select artwork from the original PNG without changing it.
-# Each pixel in the source artwork was enlarged to a 31 x 31 block.
 @export var tileset: Texture2D
-@export var rail_region: Rect2 = Rect2(0, 434, 496, 62)
-@export var support_region: Rect2 = Rect2(0, 496, 496, 496)
-@export_range(1.0, 8.0, 1.0) var art_pixel_size: float = 4.0
-@export_range(64.0, 192.0, 16.0) var support_spacing: float = 128.0
-@export var ground_y: float = 480.0
-@export var repair_tint: Color = Color("#ffe0a0")
+@export_range(0.0, 1.0, 0.05) var broken_probability: float = 0.6
+# Set a nonzero seed to reproduce a particular route while tuning.
+@export var generation_seed: int = 0
 
-const SOURCE_PIXEL_SIZE: float = 31.0
-const SEGMENT_LENGTH: float = 4.0
-const CHAIN_SPACING: float = 20.0
-
-var length: float = 0.0
-var conveyor_start: float = 0.0
-var conveyor_end: float = 0.0
-
-# Cache the artwork geometry once; moving the cart does not rebuild the rails.
-var _rail_quads: Array[PackedVector2Array] = []
-var _rail_gaps: PackedInt32Array = PackedInt32Array()
-var _rail_uvs: PackedVector2Array = PackedVector2Array()
-var _supports: Array[Rect2] = []
-var _loop_ranges: Array[Vector2] = []
-var _installed: Array[bool] = []
-var _chain_sprites: Array[Sprite2D] = []
-var _chain_texture: AtlasTexture
-var _chain_offset: float = 0.0
+var segments: Array[RailSegment] = []
+var _rng := RandomNumberGenerator.new()
+var _tail_x: float = -260.0
+var _tail_y: float = 400.0
+var _tail_distance: float = -260.0
+var _next_id: int = 0
+var _since_loop: int = 0
+var _next_loop: int = 9
 
 
-func build(starts: Array[float], gap_length: float, installed: Array[bool]) -> void:
-	_build_track()
-	length = curve.get_baked_length()
-	_installed = installed.duplicate()
-	# Keep each repair piece the same physical length even on a longer route.
-	_cache_rails(starts, gap_length / length)
-	_cache_supports()
-	_build_conveyor()
-	queue_redraw()
+func begin_run() -> void:
+	for segment in segments:
+		segment.free()
+	segments.clear()
+	_tail_x = -260.0
+	_tail_y = 400.0
+	_tail_distance = -260.0
+	_next_id = 0
+	_since_loop = 0
+	if generation_seed == 0:
+		_rng.randomize()
+	else:
+		_rng.seed = generation_seed
+	_next_loop = _rng.randi_range(8, 12)
+	# A safe boarding platform, conveyor climb and exit give time to learn.
+	_append_segment(RailSegment.FLAT, 400.0, false, false, 360.0)
+	_append_segment(RailSegment.RISING, 310.0, false, true)
+	_append_segment(RailSegment.FLAT, 310.0, false)
+	ensure_ahead(0.0, 0.0)
 
 
-func set_piece_installed(index: int, value: bool) -> void:
-	_installed[index] = value
-	queue_redraw()
+func ensure_ahead(distance: float, scroll_x: float) -> void:
+	# Check both horizontal coverage and path length: loops use lots of path.
+	while _tail_x < scroll_x + 1400.0 or _tail_distance < distance + 1800.0:
+		_generate_segment()
 
 
-func advance_conveyor(movement: float) -> void:
-	_chain_offset = fposmod(_chain_offset + movement, CHAIN_SPACING)
-	for i in range(_chain_sprites.size()):
-		var offset := i * CHAIN_SPACING + _chain_offset
-		var link := _chain_sprites[i]
-		link.visible = offset < conveyor_end
-		if link.visible:
-			var pose := curve.sample_baked_with_rotation(offset)
-			link.position = pose.origin + pose.y * 4.0
-			link.rotation = pose.get_rotation()
-
-
-func _build_track() -> void:
-	_loop_ranges.clear()
-	curve = Curve2D.new()
-	curve.bake_interval = 2.0
-
-	# Boarding platform.
-	curve.add_point(
-		Vector2(100, 440),
-		Vector2.ZERO,
-		Vector2(40, 0)
-	)
-
-	# Beginning of the conveyor incline.
-	curve.add_point(
-		Vector2(220, 440),
-		Vector2(-40, 0),
-		Vector2(100, -100)
-	)
-
-	# The incline begins after the flat boarding platform.
-	conveyor_start = curve.get_baked_length()
-
-	# Top of the conveyor lift.
-	curve.add_point(
-		Vector2(520, 160),
-		Vector2(-100, 0),
-		Vector2(120, 0)
-	)
-
-	# Record where the conveyor section ends.
-	conveyor_end = curve.get_baked_length()
-
-	# First drop.
-	curve.add_point(
-		Vector2(900, 440),
-		Vector2(-160, 0),
-		Vector2(80, 0)
-	)
-
-	_add_loop(Vector2(1140, 440), 145.0)
-
-	# Hill between the loops.
-	curve.add_point(
-		Vector2(1500, 440),
-		Vector2(-90, 0),
-		Vector2(130, 0)
-	)
-	curve.add_point(
-		Vector2(1840, 240),
-		Vector2(-140, 0),
-		Vector2(140, 0)
-	)
-	curve.add_point(
-		Vector2(2150, 440),
-		Vector2(-130, 0),
-		Vector2(80, 0)
-	)
-
-	_add_loop(Vector2(2540, 440), 150.0)
-
-	# Final hill of the first section.
-	curve.add_point(
-		Vector2(2880, 440),
-		Vector2(-90, 0),
-		Vector2(100, 0)
-	)
-	curve.add_point(
-		Vector2(3100, 300),
-		Vector2(-100, 0),
-		Vector2(100, 0)
-	)
-	curve.add_point(
-		Vector2(3360, 440),
-		Vector2(-100, 0),
-		Vector2(80, 0)
-	)
-	curve.add_point(
-		Vector2(3600, 440),
-		Vector2(-80, 0),
-		Vector2(100, 0)
-	)
-
-	# The longer ride continues right through four more loops and six hills.
-	_add_hill(Vector2(3900, 200), Vector2(4250, 440))
-	_add_loop(Vector2(4610, 440), 155.0)
-	curve.add_point(Vector2(4960, 440), Vector2(-90, 0), Vector2(100, 0))
-	_add_hill(Vector2(5260, 260), Vector2(5580, 440))
-	_add_loop(Vector2(5960, 440), 145.0)
-	curve.add_point(Vector2(6300, 440), Vector2(-90, 0), Vector2(110, 0))
-	_add_hill(Vector2(6620, 180), Vector2(6980, 440))
-	_add_loop(Vector2(7360, 440), 155.0)
-	curve.add_point(Vector2(7700, 440), Vector2(-90, 0), Vector2(110, 0))
-	_add_hill(Vector2(8060, 260), Vector2(8420, 440))
-	_add_loop(Vector2(8800, 440), 150.0)
-	curve.add_point(Vector2(9160, 440), Vector2(-90, 0), Vector2(100, 0))
-	_add_hill(Vector2(9460, 180), Vector2(9820, 440))
-	curve.add_point(Vector2(10080, 440), Vector2(-80, 0), Vector2(100, 0))
-	_add_hill(Vector2(10340, 320), Vector2(10600, 440))
-	# Arrival platform: this is still an open route with a definite end.
-	curve.add_point(Vector2(10800, 440), Vector2(-80, 0), Vector2.ZERO)
-
-
-func _add_hill(crest: Vector2, bottom: Vector2) -> void:
-	curve.add_point(crest, Vector2(-140, 0), Vector2(140, 0))
-	curve.add_point(bottom, Vector2(-130, 0), Vector2(80, 0))
-
-
-func _add_loop(base: Vector2, radius: float) -> void:
-	var loop_start := curve.get_baked_length()
-	var center := base + Vector2(0, -radius)
-
-	# Handle length for approximating a quarter circle.
-	var handle := radius * 0.5522848
-
-	# Enter at the bottom, travelling right.
-	curve.add_point(
-		base,
-		Vector2(-80, 0),
-		Vector2(handle, 0)
-	)
-
-	# Right side.
-	curve.add_point(
-		center + Vector2(radius, 0),
-		Vector2(0, handle),
-		Vector2(0, -handle)
-	)
-
-	# Top.
-	curve.add_point(
-		center + Vector2(0, -radius),
-		Vector2(handle, 0),
-		Vector2(-handle, 0)
-	)
-
-	# Left side.
-	curve.add_point(
-		center + Vector2(-radius, 0),
-		Vector2(0, -handle),
-		Vector2(0, handle)
-	)
-
-	# Return to the bottom and exit right.
-	curve.add_point(
-		base,
-		Vector2(-handle, 0),
-		Vector2(80, 0)
-	)
-
-	# Skip upright scaffolding inside the loop and its approach.
-	_loop_ranges.append(Vector2(loop_start, curve.get_baked_length()))
-
-
-func _cache_rails(starts: Array[float], gap_size: float) -> void:
-	_rail_quads.clear()
-	_rail_gaps.clear()
-	# UVs select just the rail strip within the whole tileset (0..1 coordinates).
-	var texture_size := Vector2(tileset.get_size())
-	var uv_start := rail_region.position / texture_size
-	var uv_end := rail_region.end / texture_size
-	_rail_uvs = PackedVector2Array([
-		uv_start, Vector2(uv_end.x, uv_start.y),
-		uv_end, Vector2(uv_start.x, uv_end.y)
-	])
-
-	# Split exactly at every gap boundary so the artwork matches collision checks.
-	var cursor := 0.0
-	for i in range(starts.size()):
-		var gap_start := starts[i] * length
-		var gap_end := gap_start + gap_size * length
-		_cache_span(cursor, gap_start, -1)
-		_cache_span(gap_start, gap_end, i)
-		cursor = gap_end
-	_cache_span(cursor, length, -1)
-
-
-func _cache_span(from_distance: float, to_distance: float, gap: int) -> void:
-	var rail_depth := rail_region.size.y * art_pixel_size / SOURCE_PIXEL_SIZE
-	var offset := from_distance
-	while offset < to_distance:
-		var next_offset := minf(offset + SEGMENT_LENGTH, to_distance)
-		var start_pose := curve.sample_baked_with_rotation(offset)
-		var end_pose := curve.sample_baked_with_rotation(next_offset)
-		# The rail's top edge is the same path the cart's wheels follow.
-		# Four corners let the sprite strip bend without cracks between sections.
-		_rail_quads.append(PackedVector2Array([
-			start_pose.origin,
-			end_pose.origin,
-			end_pose.origin + end_pose.y * rail_depth,
-			start_pose.origin + start_pose.y * rail_depth
-		]))
-		_rail_gaps.append(gap)
-		offset = next_offset
-
-
-func _cache_supports() -> void:
-	_supports.clear()
-	var tile_size := support_region.size * art_pixel_size / SOURCE_PIXEL_SIZE
-	var rail_depth := rail_region.size.y * art_pixel_size / SOURCE_PIXEL_SIZE
-	var offset := 0.0
-	while offset < length:
-		var pose := curve.sample_baked_with_rotation(offset)
-		# Upright frames belong under hills, rather than across the loop's opening.
-		if not _inside_loop(offset) and pose.x.x > 0.2:
-			# Wide frames fit flat sections. On a slope, use the frame's left
-			# wooden post so scaffolding does not poke above the inclined rail.
-			var width := tile_size.x if absf(pose.x.y) < 0.08 else art_pixel_size
-			var y := pose.origin.y + rail_depth
-			while y < ground_y:
-				var height := minf(tile_size.y, ground_y - y)
-				_supports.append(Rect2(
-					pose.origin.x - width * 0.5, y, width, height
-				))
-				y += height
-		offset += support_spacing
-
-
-func _inside_loop(offset: float) -> bool:
-	for interval in _loop_ranges:
-		if offset >= interval.x and offset <= interval.y:
-			return true
-	return false
-
-
-func _build_conveyor() -> void:
-	for link in _chain_sprites:
-		link.free()
-	_chain_sprites.clear()
-	_chain_offset = 0.0
-	# A single silver pixel from the rail becomes each gold chain link.
-	_chain_texture = AtlasTexture.new()
-	_chain_texture.atlas = tileset
-	_chain_texture.region = Rect2(0, 434, SOURCE_PIXEL_SIZE, SOURCE_PIXEL_SIZE)
-	_chain_texture.filter_clip = true
-	for i in range(ceili(conveyor_end / CHAIN_SPACING)):
-		var link := Sprite2D.new()
-		link.name = "ChainLink%d" % i
-		link.texture = _chain_texture
-		link.scale = Vector2(3.0, 10.0) / SOURCE_PIXEL_SIZE
-		link.modulate = Color("#ffd37a")
-		link.z_index = 1
-		add_child(link)
-		_chain_sprites.append(link)
-	advance_conveyor(0.0)
-
-
-func _draw() -> void:
-	if tileset == null or length <= 0.0:
+func _generate_segment() -> void:
+	if _since_loop >= _next_loop:
+		if _tail_y >= 390.0:
+			_append_segment(RailSegment.LOOP, _tail_y, _rng.randf() < broken_probability, false, 520.0)
+			_since_loop = 0
+			_next_loop = _rng.randi_range(8, 12)
+			return
+		# Bring an elevated section down before starting a full loop.
+		_append_segment(RailSegment.FALLING, minf(_tail_y + 90.0, 400.0), _rng.randf() < broken_probability)
+		_since_loop += 1
 		return
+	var choices: Array[int] = [RailSegment.FLAT]
+	if _tail_y > 220.0:
+		choices.append(RailSegment.RISING)
+	if _tail_y < 400.0:
+		choices.append(RailSegment.FALLING)
+	var kind := choices[_rng.randi_range(0, choices.size() - 1)]
+	var next_y := _tail_y
+	if kind == RailSegment.RISING:
+		next_y -= 90.0
+	elif kind == RailSegment.FALLING:
+		next_y += 90.0
+	_append_segment(kind, next_y, _rng.randf() < broken_probability)
+	_since_loop += 1
 
-	# Supports stay upright. The final tile is cropped at ground height.
-	for rect in _supports:
-		var source_size := rect.size * SOURCE_PIXEL_SIZE / art_pixel_size
-		draw_texture_rect_region(
-			tileset, rect, Rect2(support_region.position, source_size)
-		)
 
-	for i in range(_rail_quads.size()):
-		var gap := _rail_gaps[i]
-		if gap != -1 and not _installed[gap]:
-			continue
-		var tint := Color.WHITE if gap == -1 else repair_tint
-		draw_colored_polygon(_rail_quads[i], tint, _rail_uvs, tileset)
+func _append_segment(kind: int, end_y: float, broken: bool,
+	conveyor: bool = false, width: float = 320.0) -> void:
+	var segment := RailSegment.new()
+	segment.segment_id = _next_id
+	_next_id += 1
+	segment.start_distance = _tail_distance
+	segment.position = Vector2(_tail_x, 0)
+	segment.configure(tileset, kind, _tail_y, end_y, broken, conveyor, width)
+	add_child(segment)
+	segments.append(segment)
+	_tail_x += width
+	_tail_y = end_y
+	_tail_distance += segment.length
+
+
+func segment_at(distance: float) -> RailSegment:
+	for segment in segments:
+		if distance < segment.start_distance + segment.length:
+			return segment
+	return null
+
+
+func find_segment(segment_id: int) -> RailSegment:
+	for segment in segments:
+		if segment.segment_id == segment_id:
+			return segment
+	return null
+
+
+func prune(distance: float) -> void:
+	# Keep the previous section visible behind the cart and free older ones.
+	while segments.size() > 2 and segments[1].start_distance + segments[1].length < distance:
+		var old := segments.pop_front() as RailSegment
+		old.free()
+	# Rebase local positions; endless play never accumulates huge coordinates.
+	if not segments.is_empty() and segments[0].position.x > 2000.0:
+		var shift := segments[0].position.x
+		for segment in segments:
+			segment.position.x -= shift
+		_tail_x -= shift

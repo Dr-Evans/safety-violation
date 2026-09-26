@@ -2,11 +2,7 @@
 
 [ext_resource type="Script" path="res://repair_inventory.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
-
-[sub_resource type="AtlasTexture" id="Texture_rail"]
-atlas = ExtResource("2_tileset")
-region = Rect2(0, 434, 496, 62)
-filter_clip = true
+[ext_resource type="Script" path="res://rail_icon.gd" id="3_icon"]
 
 [sub_resource type="SystemFont" id="Font_heading"]
 font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
@@ -59,9 +55,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -240.0
+offset_left = -450.0
 offset_top = -88.0
-offset_right = 240.0
+offset_right = 450.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -73,7 +69,7 @@ mouse_filter = 2
 theme_override_constants/separation = 12
 
 [node name="Info" type="VBoxContainer" parent="Tray/Content"]
-custom_minimum_size = Vector2(230, 0)
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -85,8 +81,8 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
 theme_override_fonts/font = SubResource("Font_heading")
-theme_override_font_sizes/font_size = 17
-text = "RAIL INVENTORY  0/1"
+theme_override_font_sizes/font_size = 16
+text = "NEXT REPAIR"
 
 [node name="Hint" type="Label" parent="Tray/Content/Info"]
 layout_mode = 2
@@ -94,39 +90,127 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("Font_controls")
 theme_override_font_sizes/font_size = 12
-text = "Carry one rail at a time.\nDrag used rails here to reuse."
+text = "Drag or press A / S / D / F."
 
-[node name="Slot" type="PanelContainer" parent="Tray/Content"]
-custom_minimum_size = Vector2(112, 56)
+[node name="Rising" type="PanelContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(126, 56)
 layout_mode = 2
 mouse_filter = 0
-mouse_default_cursor_shape = 0
+mouse_default_cursor_shape = 2
 theme_override_styles/panel = SubResource("Style_slot")
 
-[node name="Contents" type="VBoxContainer" parent="Tray/Content/Slot"]
+[node name="Contents" type="VBoxContainer" parent="Tray/Content/Rising"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 6
-alignment = 1
+theme_override_constants/separation = 4
 
-[node name="Label" type="Label" parent="Tray/Content/Slot/Contents"]
+[node name="Label" type="Label" parent="Tray/Content/Rising/Contents"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
 theme_override_fonts/font = SubResource("Font_controls")
 theme_override_font_sizes/font_size = 12
-text = "EMPTY"
+text = "A   RISING"
 horizontal_alignment = 1
 
-[node name="Rail" type="TextureRect" parent="Tray/Content/Slot/Contents"]
-visible = false
-custom_minimum_size = Vector2(64, 8)
+[node name="Rail" type="Control" parent="Tray/Content/Rising/Contents"]
+custom_minimum_size = Vector2(108, 30)
 layout_mode = 2
 texture_filter = 1
 mouse_filter = 2
-texture = SubResource("Texture_rail")
-expand_mode = 1
-stretch_mode = 5
+script = ExtResource("3_icon")
+kind = 0
+tileset = ExtResource("2_tileset")
+
+[node name="Flat" type="PanelContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(126, 56)
+layout_mode = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/panel = SubResource("Style_slot")
+
+[node name="Contents" type="VBoxContainer" parent="Tray/Content/Flat"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="Tray/Content/Flat/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "S   FLAT"
+horizontal_alignment = 1
+
+[node name="Rail" type="Control" parent="Tray/Content/Flat/Contents"]
+custom_minimum_size = Vector2(108, 30)
+layout_mode = 2
+texture_filter = 1
+mouse_filter = 2
+script = ExtResource("3_icon")
+kind = 1
+tileset = ExtResource("2_tileset")
+
+[node name="Falling" type="PanelContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(126, 56)
+layout_mode = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/panel = SubResource("Style_slot")
+
+[node name="Contents" type="VBoxContainer" parent="Tray/Content/Falling"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="Tray/Content/Falling/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "D   FALLING"
+horizontal_alignment = 1
+
+[node name="Rail" type="Control" parent="Tray/Content/Falling/Contents"]
+custom_minimum_size = Vector2(108, 30)
+layout_mode = 2
+texture_filter = 1
+mouse_filter = 2
+script = ExtResource("3_icon")
+kind = 2
+tileset = ExtResource("2_tileset")
+
+[node name="Loop" type="PanelContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(126, 56)
+layout_mode = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 2
+theme_override_styles/panel = SubResource("Style_slot")
+
+[node name="Contents" type="VBoxContainer" parent="Tray/Content/Loop"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="Tray/Content/Loop/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "F   LOOP"
+horizontal_alignment = 1
+
+[node name="Rail" type="Control" parent="Tray/Content/Loop/Contents"]
+custom_minimum_size = Vector2(108, 30)
+layout_mode = 2
+texture_filter = 1
+mouse_filter = 2
+script = ExtResource("3_icon")
+kind = 3
+tileset = ExtResource("2_tileset")
 
 [node name="Preview" type="PanelContainer" parent="."]
 visible = false
@@ -141,14 +225,14 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Rail" type="TextureRect" parent="Preview/Contents"]
-custom_minimum_size = Vector2(80, 10)
+[node name="Rail" type="Control" parent="Preview/Contents"]
+custom_minimum_size = Vector2(100, 30)
 layout_mode = 2
 texture_filter = 1
 mouse_filter = 2
-texture = SubResource("Texture_rail")
-expand_mode = 1
-stretch_mode = 5
+script = ExtResource("3_icon")
+kind = 1
+tileset = ExtResource("2_tileset")
 
 [node name="Hint" type="Label" parent="Preview/Contents"]
 layout_mode = 2

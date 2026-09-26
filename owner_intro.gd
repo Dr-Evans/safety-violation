@@ -3,8 +3,8 @@ extends Control
 @export_range(1.0, 120.0, 1.0) var characters_per_second: float = 35.0
 @export var dialogue_lines: Array[String] = [
 	"You're the new operator? Good. The coaster is open, and the repair budget is already gone.",
-	"Two reusable rails are already on the track. Once the cart passes a rail, drag it to your tray. You can carry ONE at a time.",
-	"Drag that rail onto a red gap before the cart gets there. Drag empty space or use A/D to look ahead. Press F to find the cart.",
+	"The track keeps coming. When a red gap appears, give it the right rail: rising, flat, falling, or a loop. Drag one from the supply tray.",
+	"Or use the keys: A for rising, S for flat, D for falling, F for loops. Fix gaps before the cart reaches them. The ride gets faster, and repairs earn bonus points.",
 	"Keep the passengers alive. And if anyone asks about the missing track... it's a budget cut. Now, get to work."
 ]
 

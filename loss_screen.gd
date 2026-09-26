@@ -1,6 +1,7 @@
 extends Control
 
 @onready var retry_button: Button = $Center/Sign/Content/Actions/RetryButton
+@onready var results_label: Label = $Center/Sign/Content/Results
 @onready var menu_button: Button = $Center/Sign/Content/Actions/MenuButton
 
 var changing_scene: bool = false
@@ -9,6 +10,11 @@ var changing_scene: bool = false
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	_on_visibility_changed()
+
+
+func show_results(score: int, meters: float, repairs: int) -> void:
+	results_label.text = "SCORE %d  |  %dm  |  %d REPAIRS" % [score, int(meters), repairs]
+	show()
 
 
 func _on_visibility_changed() -> void:
@@ -28,7 +34,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_retry_button_pressed() -> void:
-	# Load a fresh ride: distance, installed rails, and inventory all reset.
+	# Load a fresh ride: route, speed, distance and score all reset.
 	_change_scene("res://main.tscn")
 
 
