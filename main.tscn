@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bfrhtkn4ysao5" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
 [ext_resource type="PackedScene" path="res://background.tscn" id="3_background"]
+[ext_resource type="Script" path="res://coaster_track.gd" id="4_track"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
 
@@ -17,9 +18,13 @@ script = ExtResource("1_ig7tw")
 [node name="Background" parent="." instance=ExtResource("3_background")]
 
 [node name="Track" type="Path2D" parent="." unique_id=1991736849]
+texture_filter = 1
+script = ExtResource("4_track")
 curve = SubResource("Curve2D_7dm0k")
+tileset = ExtResource("2_tileset")
 
 [node name="Cart" type="PathFollow2D" parent="Track" unique_id=277138850]
+z_index = 2
 loop = false
 cubic_interp = false
 
