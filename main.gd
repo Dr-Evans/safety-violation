@@ -7,11 +7,11 @@ extends Node2D
 @onready var camera: Camera2D = $Camera
 @onready var track: Path2D = $Track
 @onready var cart: PathFollow2D = $Track/Cart
-@onready var body: Polygon2D = $Track/Cart/Body
 @onready var status: Label = $HUD/Status
 
 const TOTAL_PARTS: int = 2
-const CART_CLEARANCE: float = 18.0
+# The cart sprite is 52 px wide; leave 4 px extra at its front and rear.
+const CART_CLEARANCE: float = 30.0
 const CLICK_RADIUS: float = 24.0
 const WORLD_WIDTH: float = 3800.0
 
@@ -42,14 +42,8 @@ func _ready() -> void:
 	cart.cubic_interp = false
 	cart.progress = 0.0
 
-	# Placeholder cart; its local +X axis faces along the track.
-	body.polygon = PackedVector2Array([
-		Vector2(-14, -20),
-		Vector2(14, -20),
-		Vector2(14, -3),
-		Vector2(-14, -3),
-	])
-	body.color = Color("#d95858")
+	# The Sprite2D under Cart displays the tileset artwork, configured in
+	# main.tscn with its wheel bottoms aligned to the path at local y = 0.
 
 	status.position = Vector2(16, 16)
 	status.mouse_filter = Control.MOUSE_FILTER_IGNORE

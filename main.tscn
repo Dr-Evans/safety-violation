@@ -1,8 +1,14 @@
 [gd_scene format=3 uid="uid://bmw64eq2m0u2y"]
 
 [ext_resource type="Script" uid="uid://bfrhtkn4ysao5" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cart"]
+atlas = ExtResource("2_tileset")
+region = Rect2(31, 1271, 403, 217)
+filter_clip = true
 
 [node name="Main" type="Node2D" unique_id=138476622]
 script = ExtResource("1_ig7tw")
@@ -14,7 +20,12 @@ curve = SubResource("Curve2D_7dm0k")
 loop = false
 cubic_interp = false
 
-[node name="Body" type="Polygon2D" parent="Track/Cart" unique_id=2017269555]
+[node name="Body" type="Sprite2D" parent="Track/Cart" unique_id=2017269555]
+texture_filter = 1
+position = Vector2(-26, -28)
+scale = Vector2(0.12903226, 0.12903226)
+texture = SubResource("AtlasTexture_cart")
+centered = false
 
 [node name="Camera" type="Camera2D" parent="." unique_id=912009987]
 position = Vector2(480, 270)
