@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://loss_screen.tscn" id="5_loss"]
 [ext_resource type="PackedScene" path="res://repair_inventory.tscn" id="6_inventory"]
 [ext_resource type="AudioStream" path="res://sounds/trainClack.wav" id="7_train_clack"]
+[ext_resource type="Script" path="res://cart_visual.gd" id="8_cart_visual"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
 
@@ -34,12 +35,27 @@ z_index = 2
 loop = false
 cubic_interp = false
 
-[node name="Body" type="Sprite2D" parent="Track/Cart" unique_id=2017269555]
+[node name="Visual" type="Node2D" parent="Track/Cart"]
+script = ExtResource("8_cart_visual")
+
+[node name="Body" type="Sprite2D" parent="Track/Cart/Visual" unique_id=2017269555]
 texture_filter = 1
 position = Vector2(-26, -28)
 scale = Vector2(0.12903226, 0.12903226)
 texture = SubResource("AtlasTexture_cart")
 centered = false
+
+[node name="RearSpoke" type="Polygon2D" parent="Track/Cart/Visual"]
+position = Vector2(-14, -4)
+color = Color(0.34, 0.32, 0.31, 1)
+polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
+antialiased = false
+
+[node name="FrontSpoke" type="Polygon2D" parent="Track/Cart/Visual"]
+position = Vector2(18, -4)
+color = Color(0.34, 0.32, 0.31, 1)
+polygon = PackedVector2Array(-2.5, -0.6, 2.5, -0.6, 2.5, 0.6, -2.5, 0.6)
+antialiased = false
 
 [node name="Camera" type="Camera2D" parent="." unique_id=912009987]
 position = Vector2(480, 270)

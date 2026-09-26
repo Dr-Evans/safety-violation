@@ -8,6 +8,7 @@ extends Node2D
 @onready var camera: Camera2D = $Camera
 @onready var track: CoasterTrack = $Track
 @onready var cart: PathFollow2D = $Track/Cart
+@onready var cart_visual: CartVisual = $Track/Cart/Visual
 @onready var loss_screen: Control = $HUD/LossScreen
 @onready var inventory: RepairInventory = $HUD/Inventory
 @onready var train_audio: AudioStreamPlayer = $TrainClack
@@ -63,7 +64,7 @@ func _ready() -> void:
 	cart.cubic_interp = false
 	cart.progress = 0.0
 
-	# The Sprite2D under Cart displays the tileset artwork, configured in
+	# The Sprite2D under Cart/Visual displays the tileset artwork, configured in
 	# main.tscn with its wheel bottoms aligned to the path at local y = 0.
 
 	_set_camera_x(480.0)
@@ -83,6 +84,7 @@ func _physics_process(delta: float) -> void:
 	_pan_camera(delta)
 
 	if not running:
+		cart_visual.reset_suspension()
 		return
 
 	var speed := ride_speed
@@ -93,6 +95,8 @@ func _physics_process(delta: float) -> void:
 	var previous_distance := distance
 	distance = minf(distance + speed * delta, track_length)
 	cart.progress = distance
+	# Animate only the artwork; path progress and repair clearance stay exact.
+	cart_visual.advance(distance - previous_distance, delta)
 
 	# Sweep the whole movement, including the cart's front and rear.
 	for i in range(gap_starts.size()):
@@ -110,6 +114,7 @@ func _physics_process(delta: float) -> void:
 	if not crashed and distance >= track_length:
 		finished = true
 		running = false
+		cart_visual.reset_suspension()
 
 	if crashed or finished:
 		_cancel_part_drag()
