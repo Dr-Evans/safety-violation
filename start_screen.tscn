@@ -148,7 +148,8 @@ theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("SystemFont_controls")
 theme_override_font_sizes/font_size = 15
 text = "Click red circles to place rails; gold circles to reclaim them.
-A/D or arrow keys: pan   |   F: find cart   |   R: restart"
+Drag empty space or use A/D / arrows to pan.
+F: find cart   |   R: restart"
 horizontal_alignment = 1
 
 [connection signal="pressed" from="Center/Sign/Content/StartButton" to="." method="_on_start_button_pressed"]

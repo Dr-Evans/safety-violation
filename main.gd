@@ -29,6 +29,7 @@ var running: bool = false
 var crashed: bool = false
 var conveyor_end: float = 0.0
 var finished: bool = false
+var _dragging_camera: bool = false
 
 
 func _ready() -> void:
@@ -75,6 +76,8 @@ func _physics_process(delta: float) -> void:
 		):
 			crashed = true
 			running = false
+			# Finish this physics update before replacing the gameplay scene.
+			_show_loss_screen.call_deferred()
 			break
 
 	if not crashed and distance >= track_length:
@@ -82,6 +85,12 @@ func _physics_process(delta: float) -> void:
 		running = false
 
 	queue_redraw()
+
+
+func _show_loss_screen() -> void:
+	var result := get_tree().change_scene_to_file("res://loss_screen.tscn")
+	if result != OK:
+		push_error("Could not open the loss screen: %s" % error_string(result))
 
 
 func _pan_camera(delta: float) -> void:
@@ -95,7 +104,7 @@ func _set_camera_x(value: float) -> void:
 		clampf(value, half_width, WORLD_WIDTH - half_width),
 		270.0
 	)
-	# Keep mouse-to-world coordinates current after panning or pressing F.
+	# Keep repair hit detection current after keyboard or mouse panning.
 	camera.force_update_scroll()
 
 
@@ -114,17 +123,31 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("start") and not crashed and not finished:
 		running = true
 
-	if crashed or finished:
-		return
-
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			var mouse := get_local_mouse_position()
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_dragging_camera = false
+			if event.pressed:
+				# Marker clicks repair rails; only empty space starts a drag.
+				if not crashed and not finished:
+					var mouse := get_local_mouse_position()
+					for i in range(gap_starts.size()):
+						if mouse.distance_to(_marker_position(i)) <= CLICK_RADIUS:
+							_toggle_piece(i)
+							get_viewport().set_input_as_handled()
+							return
+				_dragging_camera = true
+			get_viewport().set_input_as_handled()
+			return
 
-			for i in range(gap_starts.size()):
-				if mouse.distance_to(_marker_position(i)) <= CLICK_RADIUS:
-					_toggle_piece(i)
-					break
+	if event is InputEventMouseMotion and _dragging_camera:
+		# Also stop if the mouse was released outside the game window.
+		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			_dragging_camera = false
+			return
+		# Move the world with the pointer. Relative movement already accounts
+		# for window stretching; dividing by zoom converts it to world units.
+		_set_camera_x(camera.position.x - event.relative.x / camera.zoom.x)
+		get_viewport().set_input_as_handled()
 
 
 func _toggle_piece(index: int) -> void:
