@@ -147,7 +147,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
 theme_override_fonts/font = SubResource("SystemFont_controls")
 theme_override_font_sizes/font_size = 15
-text = "Click red circles to place rails; gold circles to reclaim them.
+text = "Drag used rails to the tray, then onto red gaps. Carry one rail.
 Drag empty space or use A/D / arrows to pan.
 F: find cart   |   R: restart"
 horizontal_alignment = 1

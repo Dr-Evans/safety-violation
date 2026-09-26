@@ -1,0 +1,160 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://repair_inventory.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/tileset.png" id="2_tileset"]
+
+[sub_resource type="AtlasTexture" id="Texture_rail"]
+atlas = ExtResource("2_tileset")
+region = Rect2(0, 434, 496, 62)
+filter_clip = true
+
+[sub_resource type="SystemFont" id="Font_heading"]
+font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
+font_weight = 700
+
+[sub_resource type="SystemFont" id="Font_controls"]
+font_names = PackedStringArray("Consolas", "DejaVu Sans Mono")
+
+[sub_resource type="StyleBoxFlat" id="Style_sign"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.98, 0.95, 0.87, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.09, 0.12, 0.14, 1)
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 4
+shadow_offset = Vector2(4, 4)
+
+[sub_resource type="StyleBoxFlat" id="Style_slot"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(1, 0.97, 0.9, 1)
+border_width_left = 2
+border_width_top = 4
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.48, 0.21, 1)
+
+[node name="Inventory" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Tray" type="PanelContainer" parent="."]
+layout_mode = 1
+mouse_filter = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -88.0
+offset_right = 240.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("Style_sign")
+
+[node name="Content" type="HBoxContainer" parent="Tray"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Info" type="VBoxContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(230, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Count" type="Label" parent="Tray/Content/Info"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_heading")
+theme_override_font_sizes/font_size = 17
+text = "RAIL INVENTORY  0/1"
+
+[node name="Hint" type="Label" parent="Tray/Content/Info"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "Carry one rail at a time.\nDrag used rails here to reuse."
+
+[node name="Slot" type="PanelContainer" parent="Tray/Content"]
+custom_minimum_size = Vector2(112, 56)
+layout_mode = 2
+mouse_filter = 0
+mouse_default_cursor_shape = 0
+theme_override_styles/panel = SubResource("Style_slot")
+
+[node name="Contents" type="VBoxContainer" parent="Tray/Content/Slot"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Label" type="Label" parent="Tray/Content/Slot/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "EMPTY"
+horizontal_alignment = 1
+
+[node name="Rail" type="TextureRect" parent="Tray/Content/Slot/Contents"]
+visible = false
+custom_minimum_size = Vector2(64, 8)
+layout_mode = 2
+texture_filter = 1
+mouse_filter = 2
+texture = SubResource("Texture_rail")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Preview" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 0
+z_index = 1
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_sign")
+
+[node name="Contents" type="VBoxContainer" parent="Preview"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Rail" type="TextureRect" parent="Preview/Contents"]
+custom_minimum_size = Vector2(80, 10)
+layout_mode = 2
+texture_filter = 1
+mouse_filter = 2
+texture = SubResource("Texture_rail")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Hint" type="Label" parent="Preview/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_fonts/font = SubResource("Font_controls")
+theme_override_font_sizes/font_size = 12
+text = "Place rail"
+horizontal_alignment = 1

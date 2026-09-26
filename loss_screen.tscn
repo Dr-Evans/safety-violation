@@ -17,9 +17,13 @@ shadow_color = Color(0, 0, 0, 0.5)
 shadow_size = 6
 shadow_offset = Vector2(6, 6)
 
+[sub_resource type="SystemFont" id="SystemFont_c8pfg"]
+font_names = PackedStringArray("Consolas", "DejaVu Sans Mono")
+
 [sub_resource type="SystemFont" id="SystemFont_heading"]
 font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
 font_weight = 700
+subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_retry"]
 bg_color = Color(1, 0.48, 0.21, 1)
@@ -63,6 +67,7 @@ border_color = Color(0.09, 0.12, 0.14, 1)
 
 [sub_resource type="SystemFont" id="SystemFont_controls"]
 font_names = PackedStringArray("Consolas", "DejaVu Sans Mono")
+subpixel_positioning = 0
 
 [node name="LossScreen" type="Control" unique_id=174249672]
 layout_mode = 3
@@ -101,12 +106,27 @@ theme_override_styles/panel = SubResource("StyleBox_sign")
 layout_mode = 2
 theme_override_constants/separation = 16
 
+[node name="Notice" type="Label" parent="Center/Sign/Content" unique_id=1553913336]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.38, 0.38, 1)
+theme_override_fonts/font = SubResource("SystemFont_c8pfg")
+theme_override_font_sizes/font_size = 16
+text = "AUTHORIZED PERSONELL ONLY"
+horizontal_alignment = 1
+
 [node name="Title" type="Label" parent="Center/Sign/Content" unique_id=920598695]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.2, 0.2, 1)
 theme_override_fonts/font = SubResource("SystemFont_heading")
 theme_override_font_sizes/font_size = 46
 text = "SAFETY DIE-OLATION"
+horizontal_alignment = 1
+
+[node name="Description" type="Label" parent="Center/Sign/Content" unique_id=456897695]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_font_sizes/font_size = 18
+text = "You didn't repair the track in time."
 horizontal_alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="Center/Sign/Content" unique_id=1570318230]

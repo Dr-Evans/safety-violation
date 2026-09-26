@@ -16,6 +16,7 @@ const SEGMENT_LENGTH: float = 4.0
 const CHAIN_SPACING: float = 20.0
 
 var length: float = 0.0
+var conveyor_start: float = 0.0
 var conveyor_end: float = 0.0
 
 # Cache the artwork geometry once; moving the cart does not rebuild the rails.
@@ -30,11 +31,12 @@ var _chain_texture: AtlasTexture
 var _chain_offset: float = 0.0
 
 
-func build(starts: Array[float], gap_size: float, installed: Array[bool]) -> void:
+func build(starts: Array[float], gap_length: float, installed: Array[bool]) -> void:
 	_build_track()
 	length = curve.get_baked_length()
 	_installed = installed.duplicate()
-	_cache_rails(starts, gap_size)
+	# Keep each repair piece the same physical length even on a longer route.
+	_cache_rails(starts, gap_length / length)
 	_cache_supports()
 	_build_conveyor()
 	queue_redraw()
@@ -76,6 +78,9 @@ func _build_track() -> void:
 		Vector2(100, -100)
 	)
 
+	# The incline begins after the flat boarding platform.
+	conveyor_start = curve.get_baked_length()
+
 	# Top of the conveyor lift.
 	curve.add_point(
 		Vector2(520, 160),
@@ -114,7 +119,7 @@ func _build_track() -> void:
 
 	_add_loop(Vector2(2540, 440), 150.0)
 
-	# Final hill and arrival platform.
+	# Final hill of the first section.
 	curve.add_point(
 		Vector2(2880, 440),
 		Vector2(-90, 0),
@@ -133,8 +138,32 @@ func _build_track() -> void:
 	curve.add_point(
 		Vector2(3600, 440),
 		Vector2(-80, 0),
-		Vector2.ZERO
+		Vector2(100, 0)
 	)
+
+	# The longer ride continues right through four more loops and six hills.
+	_add_hill(Vector2(3900, 200), Vector2(4250, 440))
+	_add_loop(Vector2(4610, 440), 155.0)
+	curve.add_point(Vector2(4960, 440), Vector2(-90, 0), Vector2(100, 0))
+	_add_hill(Vector2(5260, 260), Vector2(5580, 440))
+	_add_loop(Vector2(5960, 440), 145.0)
+	curve.add_point(Vector2(6300, 440), Vector2(-90, 0), Vector2(110, 0))
+	_add_hill(Vector2(6620, 180), Vector2(6980, 440))
+	_add_loop(Vector2(7360, 440), 155.0)
+	curve.add_point(Vector2(7700, 440), Vector2(-90, 0), Vector2(110, 0))
+	_add_hill(Vector2(8060, 260), Vector2(8420, 440))
+	_add_loop(Vector2(8800, 440), 150.0)
+	curve.add_point(Vector2(9160, 440), Vector2(-90, 0), Vector2(100, 0))
+	_add_hill(Vector2(9460, 180), Vector2(9820, 440))
+	curve.add_point(Vector2(10080, 440), Vector2(-80, 0), Vector2(100, 0))
+	_add_hill(Vector2(10340, 320), Vector2(10600, 440))
+	# Arrival platform: this is still an open route with a definite end.
+	curve.add_point(Vector2(10800, 440), Vector2(-80, 0), Vector2.ZERO)
+
+
+func _add_hill(crest: Vector2, bottom: Vector2) -> void:
+	curve.add_point(crest, Vector2(-140, 0), Vector2(140, 0))
+	curve.add_point(bottom, Vector2(-130, 0), Vector2(80, 0))
 
 
 func _add_loop(base: Vector2, radius: float) -> void:

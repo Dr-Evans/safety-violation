@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" path="res://background.tscn" id="3_background"]
 [ext_resource type="Script" path="res://coaster_track.gd" id="4_track"]
 [ext_resource type="PackedScene" path="res://loss_screen.tscn" id="5_loss"]
+[ext_resource type="PackedScene" path="res://repair_inventory.tscn" id="6_inventory"]
+[ext_resource type="AudioStream" path="res://sounds/trainClack.wav" id="7_train_clack"]
 
 [sub_resource type="Curve2D" id="Curve2D_7dm0k"]
 
@@ -17,6 +19,9 @@ filter_clip = true
 script = ExtResource("1_ig7tw")
 
 [node name="Background" parent="." instance=ExtResource("3_background")]
+
+[node name="TrainClack" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7_train_clack")
 
 [node name="Track" type="Path2D" parent="." unique_id=1991736849]
 texture_filter = 1
@@ -41,11 +46,13 @@ position = Vector2(480, 270)
 process_callback = 0
 limit_left = 0
 limit_top = 0
-limit_right = 3800
+limit_right = 11000
 limit_bottom = 540
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1716644902]
 layer = 10
+
+[node name="Inventory" parent="HUD" instance=ExtResource("6_inventory")]
 
 [node name="LossScreen" parent="HUD" instance=ExtResource("5_loss")]
 visible = false
