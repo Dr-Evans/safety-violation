@@ -45,6 +45,8 @@ func _ready() -> void:
 	# main.tscn with its wheel bottoms aligned to the path at local y = 0.
 
 	_set_camera_x(480.0)
+	# The title screen's Start game button begins the ride on scene load.
+	running = true
 	queue_redraw()
 
 

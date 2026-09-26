@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Safety Violation"
-run/main_scene="uid://bmw64eq2m0u2y"
+run/main_scene="res://start_screen.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 

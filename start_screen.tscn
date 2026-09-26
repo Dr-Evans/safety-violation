@@ -1,0 +1,153 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://start_screen.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://background.tscn" id="2_background"]
+
+[sub_resource type="SystemFont" id="SystemFont_heading"]
+font_names = PackedStringArray("Bahnschrift", "DejaVu Sans")
+font_weight = 700
+
+[sub_resource type="SystemFont" id="SystemFont_controls"]
+font_names = PackedStringArray("Consolas", "DejaVu Sans Mono")
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_sign"]
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
+bg_color = Color(0.98, 0.95, 0.87, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.09, 0.12, 0.14, 1)
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(6, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_button"]
+bg_color = Color(1, 0.48, 0.21, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_hover"]
+bg_color = Color(1, 0.64, 0.33, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_pressed"]
+bg_color = Color(0.82, 0.35, 0.13, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.09, 0.12, 0.14, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.71, 0.32, 0.32, 1)
+
+[node name="StartScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" parent="." instance=ExtResource("2_background")]
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.04, 0.06, 0.09, 0.3)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Sign" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(680, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_sign")
+
+[node name="Content" type="VBoxContainer" parent="Center/Sign"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="OperatorNotice" type="Label" parent="Center/Sign/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.38, 0.38, 1)
+theme_override_fonts/font = SubResource("SystemFont_controls")
+theme_override_font_sizes/font_size = 16
+text = "AUTHORIZED OPERATORS ONLY"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="Center/Sign/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_fonts/font = SubResource("SystemFont_heading")
+theme_override_font_sizes/font_size = 46
+text = "SAFETY VIOLATION"
+horizontal_alignment = 1
+
+[node name="Premise" type="Label" parent="Center/Sign/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_font_sizes/font_size = 18
+text = "Two repair pieces. Keep the cart on the track."
+horizontal_alignment = 1
+
+[node name="SafetyStripe" type="ColorRect" parent="Center/Sign/Content"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+mouse_filter = 2
+color = Color(1, 0.48, 0.21, 1)
+
+[node name="StartButton" type="Button" parent="Center/Sign/Content"]
+custom_minimum_size = Vector2(280, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_colors/font_hover_color = Color(0.09, 0.12, 0.14, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.95, 0.87, 1)
+theme_override_fonts/font = SubResource("SystemFont_heading")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBox_button")
+theme_override_styles/hover = SubResource("StyleBox_button_hover")
+theme_override_styles/pressed = SubResource("StyleBox_button_pressed")
+theme_override_styles/focus = SubResource("StyleBox_button_focus")
+text = "Start game"
+
+[node name="Controls" type="Label" parent="Center/Sign/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.24, 0.25, 1)
+theme_override_fonts/font = SubResource("SystemFont_controls")
+theme_override_font_sizes/font_size = 15
+text = "Click red circles to place rails; gold circles to reclaim them.\nA/D or arrow keys: pan   |   F: find cart   |   R: restart"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="Center/Sign/Content/StartButton" to="." method="_on_start_button_pressed"]
